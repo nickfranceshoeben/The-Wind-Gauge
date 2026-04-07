@@ -77,57 +77,6 @@ shipStartingSpeed = 1
 rShip = np.array([500.,360.])
 vShip = np.array([1.,0.])*shipStartingSpeed
 
-'''
-while running:
-    screen.fill((0,0,0))
-    shipImage = pg.transform.rotate(shipImageRef,shipAngle)
-    
-    mx, my = pg.mouse.get_pos()
-    relativeToShipX = shipX - mx
-    relativeToShipY = shipY - my
-    angleFromFrame = atan2(relativeToShipY,relativeToShipX) #Angle from coordinate frame to mouse position
-    angleFromShip = (angleFromFrame - shipAngle)*180/3.141592
-    
-    print(angleFromShip)
-    if angleFromShip > 0 and angleFromShip < 180:
-        
-        angleFromShip = min(90, angleFromShip)
-        rotationFactor = angleFromShip/90
-        
-    if angleFromShip > 180 and angleFromShip < 360:
-        
-        angleFromShip = max(270,angleFromShip)
-        rotationFactor = (angleFromShip-270)/90
-        
-    vectorX = 40*cos(angleFromShip)
-    vectorY = 40*sin(angleFromShip)
-    
-    screen.blit(shipImage, (shipX,shipY))
-    pg.draw.line(screen,(255,0,0),(int(shipX+60),int(shipY+15)),(int(shipX+vectorX),int(shipY+vectorY)),width=1)
-    
-    for event in pg.event.get():
-        
-        if event.type == pg.QUIT:
-            running = False
-            
-        elif event.type == pg.KEYDOWN:
-            if event.key == pg.K_ESCAPE:
-                running = False
-                
-    shipAngularVelocity = rotationFactor*shipAngularAccel     
-    shipAngle += -shipAngularVelocity*dt
-    shipSpeedX = shipSpeedLimit*cos(angleFromShip*3.141592/180)
-    shipSpeedY = shipSpeedLimit*sin(angleFromShip*3.141592/180)
-    shipSpeedNorm = (shipSpeedX**2 + shipSpeedY**2)**(1/2)
-    
-    if shipSpeedNorm > 1:
-        shipSpeedX = (shipSpeedX/shipSpeedNorm)*shipSpeedLimit
-        shipSpeedY = (shipSpeedY/shipSpeedNorm)*shipSpeedLimit
-    shipX += shipSpeedX*dt
-    shipY += shipSpeedY*dt
-    
-    '''
-    
 testShip = ship(np.array([500.,370.]),np.array([1.,0.]),0.0,screen,'Frigate','HMS Indomitable',True)
 testShip2 = ship(np.array([800.,200.]),np.array([0.,-0.5]),270.0,screen,'Frigate','HMS PeepeePooPoo',False)
     
