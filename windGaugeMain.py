@@ -29,7 +29,7 @@ Aim for 90 degrees for the sharpest turn)
 NOTES:
 
  - So far she handles a bit sluggishly. Tuning the speeds may be helpful in this regard.
- - Odd motion when laying off is explained by the object's coordinates being defined off-centre.
+ - Odd motion when laying off is explained by the object's coordinates being defined off-centre. FIXED
  - Tried making velocity a conservative value, but it resulted in it moving rather oddly. Certainly some resistance should be felt by the ship,
  but not as excessive as that. Think of alternatives.
  - Might be more visually appealing if one made nicer sprites for the ship and sea.
@@ -149,7 +149,8 @@ while running:
     vectorX = 40*cos(angleFromShip)
     vectorY = 40*sin(angleFromShip)
     
-    screen.blit(shipImage, (rShip[0],rShip[1]))
+    shipRect = shipImage.get_rect(center = (rShip[0],rShip[1]))    
+    screen.blit(shipImage, shipRect)
     
     for event in pg.event.get():
         
