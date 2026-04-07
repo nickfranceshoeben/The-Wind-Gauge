@@ -2,6 +2,7 @@ import pygame as pg
 import time
 from math import atan, atan2,cos,sin
 import numpy as np
+from classes import ship
 
 
 '''
@@ -53,6 +54,11 @@ shipImage = pg.transform.scale(shipImage,
 shipImage = pg.transform.flip(shipImage,1,0)
 shipImage.set_colorkey((255,255,255))
 shipImageRef = shipImage
+
+background = pg.image.load('paper50.png').convert()
+background = pg.transform.scale(background,
+                                (background.get_width()/1.9,
+                                background.get_height()/2.78))
 
 
 
@@ -122,35 +128,12 @@ while running:
     
     '''
     
+testShip = ship(np.array([500.,370.]),np.array([1.,0.]),0.0,screen,'Frigate','HMS Indomitable',True)
+testShip2 = ship(np.array([800.,200.]),np.array([0.,-0.5]),270.0,screen,'Frigate','HMS PeepeePooPoo',False)
+    
 while running:
-    screen.fill((0,0,0))
-    shipImage = pg.transform.rotate(shipImageRef,shipAngle)
+    screen.blit(background)
     
-    mx, my = pg.mouse.get_pos()
-    relativeToShipX = rShip[0] - mx
-    relativeToShipY = rShip[1] - my
-    dShip = np.array([relativeToShipX,relativeToShipY])#Distance vector between mouse position and ship position
-    angleFromShip = np.degrees(np.acos(np.dot(-vShip,dShip)/(np.linalg.norm(vShip)*np.linalg.norm(dShip))))
-    
-    w = -1*dShip
-    cross = np.cross(vShip,w)
-    
-    if cross>0:
-        
-        angleFromShip = min(90, angleFromShip)
-        rotationFactor = -angleFromShip/90
-        
-    if cross<0:
-        
-        angleFromShip = max(-90,-angleFromShip)
-        rotationFactor = -angleFromShip/90
-    
-    #print(angleFromShip)
-    vectorX = 40*cos(angleFromShip)
-    vectorY = 40*sin(angleFromShip)
-    
-    shipRect = shipImage.get_rect(center = (rShip[0],rShip[1]))    
-    screen.blit(shipImage, shipRect)
     
     for event in pg.event.get():
         
@@ -160,20 +143,9 @@ while running:
         elif event.type == pg.KEYDOWN:
             if event.key == pg.K_ESCAPE:
                 running = False
-                
-    shipAngularVelocity = rotationFactor*shipAngularAccel
-    shipAngle += shipAngularVelocity*dt
     
-    vShip = shipSpeedLimit*np.array([cos(np.radians(shipAngle)),-sin(np.radians(shipAngle))])
-    
-    
-    
-    if np.linalg.norm(vShip) > 1:
-        
-        vShip = shipSpeedLimit*vShip/np.linalg.norm(vShip)
-    
-    rShip += vShip*dt
-    
+    testShip.updateShip(dt)
+    testShip2.updateShip(dt)
                 
     pg.display.flip()
     
