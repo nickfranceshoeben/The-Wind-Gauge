@@ -42,6 +42,7 @@ NOTES:
 #Initialise Pygame:
 pg.init()
 
+domain = np.array([10000,10000])
 screen = pg.display.set_mode((1280,720))
 clock = pg.time.Clock()
 
@@ -67,16 +68,26 @@ dt = 0.001 #Dynamically adjusted, just requires starting value
 
 shipStartingSpeed = 1
 
-rShip = np.array([500.,360.])
+rCamera = np.array([5000.,5000.])
+cameraSpeedX = np.array([250.,0])
+cameraSpeedY = np.array([0,250.])
+
+rShip = np.array([5500.,5360.])
 vShip = np.array([1.,0.])*shipStartingSpeed
 
-testShip = ship(np.array([500.,370.]),np.array([1.,0.]),0.0,screen,'Frigate','HMS Indomitable',True)
-testShip2 = ship(np.array([800.,200.]),np.array([0.,-0.5]),270.0,screen,'Frigate','HMS PeepeePooPoo',False)
+testShip = ship(rShip,vShip,0.0,screen,'Frigate','HMS Indomitable',True)
+testShip2 = ship(np.array([5800.,5200.]),np.array([0.,-0.5]),270.0,screen,'Frigate','HMS PeepeePooPoo',False)
 
 wind = straightWind(np.array([5,1]),np.array([1280,720]),screen)
+
+plotWind = False
+wPressed = False
+dPressed = False
+aPressed = False
+sPressed = False
     
 while running:
-    screen.blit(background, (0,0))
+    screen.blit(background, (5000-rCamera[0],5000-rCamera[1]))
     
     
     for event in pg.event.get():
@@ -87,11 +98,48 @@ while running:
         elif event.type == pg.KEYDOWN:
             if event.key == pg.K_ESCAPE:
                 running = False
+            if event.key == pg.K_v:
+                if plotWind:
+                    plotWind = False
+                elif not plotWind:
+                    plotWind = True
 
-    wind.plotWind()
+            #Camera motion##################
+            if event.key == pg.K_w:
+                wPressed = True
+            if event.key == pg.K_s:
+                sPressed = True
+            if event.key == pg.K_d:
+                dPressed = True
+            if event.key == pg.K_a:
+                aPressed = True
+            ################################
+        
+        elif event.type == pg.KEYUP:
+
+            if event.key == pg.K_w:
+                wPressed = False
+            if event.key == pg.K_s:
+                sPressed = False
+            if event.key == pg.K_d:
+                dPressed = False
+            if event.key == pg.K_a:
+                aPressed = False
+
+    if wPressed:
+        rCamera += -cameraSpeedY*dt
+    if sPressed:
+        rCamera += cameraSpeedY*dt
+    if dPressed:
+        rCamera += cameraSpeedX*dt
+    if aPressed:
+        rCamera += -cameraSpeedX*dt
+
+    if plotWind:
+        wind.plotWind()
     
-    testShip.updateShip(dt)
-    testShip2.updateShip(dt)
+    testShip.updateShip(dt,rCamera)
+    testShip2.updateShip(dt,rCamera)
                 
     pg.display.flip()
     

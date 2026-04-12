@@ -32,15 +32,15 @@ class ship():
         self.screen = onScreen
         self.control = control
         
-    def updateShip(self,dt):
+    def updateShip(self,dt,camera:np.array):
         
         shipImage = pg.transform.rotate(self.shipImageRef,self.shipAngle)
         
         if self.control:
     
             mx, my = pg.mouse.get_pos()
-            relativeToShipX = self.rShip[0] - mx
-            relativeToShipY = self.rShip[1] - my
+            relativeToShipX = self.rShip[0] - camera[0] - mx
+            relativeToShipY = self.rShip[1] - camera[1] - my
             dShip = np.array([relativeToShipX,relativeToShipY])#Distance vector between mouse position and ship position
             angleFromShip = np.degrees(np.acos(np.dot(self.vShip,dShip)/(np.linalg.norm(self.vShip)*np.linalg.norm(dShip))))
             
@@ -62,8 +62,8 @@ class ship():
         else:
             rotationFactor=0
         
-        shipRect = shipImage.get_rect(center = (self.rShip[0],self.rShip[1]))    
-        self.screen.blit(shipImage, shipRect)
+        shipRect = shipImage.get_rect(center = (self.rShip[0]-camera[0],self.rShip[1]-camera[1]))    
+        self.screen.blit(shipImage, (shipRect))
                     
         shipAngularVelocity = rotationFactor*self.shipAngularAccel
         self.shipAngle += shipAngularVelocity*dt
