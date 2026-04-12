@@ -2,7 +2,7 @@ import pygame as pg
 import time
 from math import atan, atan2,cos,sin
 import numpy as np
-from classes import ship
+from classes import ship, straightWind
 
 
 '''
@@ -65,13 +65,6 @@ background = pg.transform.scale(background,
 running = True
 dt = 0.001 #Dynamically adjusted, just requires starting value
 
-shipAccel = 1
-shipSpeedLimit = 20
-shipAngle = 0
-shipAngularVelocity = 0
-shipAngularAccel = 15 #This can eventually be made dependent on angle.
-shipSpeedNorm = 0
-
 shipStartingSpeed = 1
 
 rShip = np.array([500.,360.])
@@ -79,9 +72,11 @@ vShip = np.array([1.,0.])*shipStartingSpeed
 
 testShip = ship(np.array([500.,370.]),np.array([1.,0.]),0.0,screen,'Frigate','HMS Indomitable',True)
 testShip2 = ship(np.array([800.,200.]),np.array([0.,-0.5]),270.0,screen,'Frigate','HMS PeepeePooPoo',False)
+
+wind = straightWind(np.array([5,1]),np.array([1280,720]),screen)
     
 while running:
-    screen.blit(background)
+    screen.blit(background, (0,0))
     
     
     for event in pg.event.get():
@@ -92,6 +87,8 @@ while running:
         elif event.type == pg.KEYDOWN:
             if event.key == pg.K_ESCAPE:
                 running = False
+
+    wind.plotWind()
     
     testShip.updateShip(dt)
     testShip2.updateShip(dt)

@@ -77,4 +77,45 @@ class ship():
             self.vShip = self.shipSpeedLimit*self.vShip/np.linalg.norm(self.vShip)
         
         self.rShip += self.vShip*dt
+
+class straightWind():
+
+    def __init__(self,directionVector:np.array, screenResolution:np.array, onScreen:pg.surface.Surface):
+
+        self.directionVector = directionVector
+        self.screenResolution = screenResolution
+        repetitions = self.screenResolution/88 #44 is about twice the length of the arrows
+        self.posVector = np.zeros([2,int(repetitions[0]),int(repetitions[1])])
+        self.screen = onScreen
+        self.windVector = pg.image.load('simpleArrow.png').convert()
+        self.windVector = pg.transform.flip(self.windVector,1,0)
+        self.windVector.set_colorkey((0,0,0))
+        self.windVector.set_alpha(125)
+
+        for i in range(0,self.posVector.shape[2]):
+            for e in range(0,self.posVector.shape[1]):
+                
+                self.posVector[:,e,i] = np.array([(screenResolution[0]/repetitions[0])*e,i*screenResolution[1]/repetitions[1]])
+
+    def plotWind(self):
+
+        angle = np.degrees(np.acos(np.dot(self.directionVector,np.array([1,0]))/(np.linalg.norm(self.directionVector)*np.linalg.norm(np.array([1,0])))))
+        windVectorOriented = pg.transform.rotate(self.windVector,angle)
+
+        for i in range(0,self.posVector.shape[2]):
+            for e in range(0,self.posVector.shape[1]):
+
+                self.screen.blit(windVectorOriented, (self.posVector[0,e,i],self.posVector[1,e,i]))
+
+
         
+
+'''
+
+
+
+class differentialWind():
+
+    def __init__()
+
+'''
