@@ -2,7 +2,7 @@ import pygame as pg
 import time
 from math import atan, atan2,cos,sin
 import numpy as np
-from classes import ship, straightWind
+from classes import ship, straightWind, background
 
 
 '''
@@ -56,11 +56,15 @@ shipImage = pg.transform.flip(shipImage,1,0)
 shipImage.set_colorkey((255,255,255))
 shipImageRef = shipImage
 
+'''
 background = pg.image.load('paper50.png').convert()
 background = pg.transform.scale(background,
                                 (background.get_width()/1.9,
                                 background.get_height()/2.78))
+                                '''
 
+backGround = background('paper50.png',np.array([1280,720]),domain,screen)
+ 
 
 
 running = True
@@ -76,7 +80,7 @@ rShip = np.array([5500.,5360.])
 vShip = np.array([1.,0.])*shipStartingSpeed
 
 testShip = ship(rShip,vShip,0.0,screen,'Frigate','HMS Indomitable',True)
-testShip2 = ship(np.array([5800.,5200.]),np.array([0.,-0.5]),270.0,screen,'Frigate','HMS PeepeePooPoo',False)
+testShip2 = ship(np.array([5800.,5200.]),np.array([0.,-0.5]),270.0,screen,'Frigate','HMS Bellerophon',False)
 
 wind = straightWind(np.array([5,1]),np.array([1280,720]),screen)
 
@@ -87,8 +91,9 @@ aPressed = False
 sPressed = False
     
 while running:
-    screen.blit(background, (5000-rCamera[0],5000-rCamera[1]))
-    
+    #screen.blit(background, (5000-rCamera[0],5000-rCamera[1]))
+
+    backGround.drawBackground(rCamera)
     
     for event in pg.event.get():
         

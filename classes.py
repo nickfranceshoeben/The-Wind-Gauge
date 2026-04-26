@@ -3,6 +3,81 @@ import pygame as pg
 import pickle as pk
 
 
+class background():
+
+    def __init__(self,file:str,screenResolution:np.array, domain:np.array, screen:pg.surface.Surface):
+
+        self.screenResolution = screenResolution
+        self.screen = screen
+        background = pg.image.load(file).convert()
+        self.background = pg.transform.scale(background,
+                                (background.get_width()/1.9,
+                                background.get_height()/2.78)) #Not sure what these numbers are atm, has to do
+                                #with particular background scaling. Will adapt in the future for new background
+
+        #Divide the entire domain into parts that have the dimensions of the background image.
+        xFit = domain[0]/self.background.get_width()
+        yFit = domain[1]/self.background.get_height()
+        dx = domain[0]/xFit
+        dy = domain[1]/yFit
+        self.xPos = np.zeros([int(xFit)+1,2])
+        self.yPos = np.zeros([int(yFit)+1,2])
+        
+        for i in range(0, int(xFit)+1):
+            
+            self.xPos[i,:] = np.array([dx*i,dx*(i+1)])
+
+        for i in range(0, int(yFit)+1):
+
+            self.yPos[i,:] = np.array([dy*i,dy*(i+1)])
+
+        print('Miep!!')
+
+    def drawBackground(self,camera:np.array):
+
+        #The whole domain is treated as a grid (where each part is shaped like the background image).
+        whereX = np.zeros([self.xPos.shape[0]]) #Create arrays shaped like 
+        whereY = np.zeros([self.yPos.shape[0]])
+        for i in range(0,self.xPos.shape[0]):
+            
+            if camera[0] >= self.xPos[i,0] and camera[0] <= self.xPos[i,1]:
+
+                whereX[i] = 1
+
+            elif (camera[0]-self.screenResolution[0]/2) >= self.xPos[i,0] and (camera[0]-self.screenResolution[0]/2) <= self.xPos[i+1,1]:
+
+                whereX[i] = 1
+
+
+        for i in range(0,self.yPos.shape[0]-1):
+            
+            if camera[1] >= self.yPos[i,0] and camera[1] <= self.yPos[i,1]:
+
+                whereY[i] = 1
+
+            elif (camera[1]-self.screenResolution[1]/2) >+ self.yPos[i,0] and (camera[1]-self.screenResolution[1]/2) <= self.yPos[i+1,1]:
+
+                whereY[i] = 1
+
+        toDraw = []
+
+        for i in range(self.yPos.shape[0]):
+            for e in range(self.xPos.shape[0]):
+                if whereY[i]==1 and whereX[e]==1:
+
+                    arr = np.vstack((self.xPos[e],self.yPos[i]))
+                    toDraw.append(arr)
+
+
+        for i in toDraw:
+
+            xCoord = i[0,0] + (i[0,1] - i[0,0])/2
+            yCoord = i[1,0] + (i[1,1] - i[1,0])/2
+
+            self.screen.blit(self.background, (xCoord+(self.screenResolution[0]/2)-camera[0], yCoord+(self.screenResolution[1]/2)-camera[1]))
+        
+
+
 class ship():
     
     def __init__(self,rShipInitial:np.array, vShipInitial:np.array, shipAngleInitial:np.array,onScreen=pg.surface.Surface, shipClass='Frigate',name='HMS Surprise', control=False):
