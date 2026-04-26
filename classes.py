@@ -31,8 +31,6 @@ class background():
 
             self.yPos[i,:] = np.array([dy*i,dy*(i+1)])
 
-        print('Miep!!')
-
     def drawBackground(self,camera:np.array):
 
         #The whole domain is treated as a grid (where each part is shaped like the background image).
