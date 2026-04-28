@@ -77,7 +77,7 @@ cameraSpeedX = np.array([250.,0])
 cameraSpeedY = np.array([0,250.])
 
 rShip = np.array([5500.,5360.])
-vShip = np.array([1.,0.])*shipStartingSpeed
+vShip = np.array([2,0.])*shipStartingSpeed
 
 testShip = ship(rShip,vShip,0.0,screen,'Frigate','HMS Indomitable',True)
 testShip2 = ship(np.array([5800.,5200.]),np.array([0.,-0.5]),270.0,screen,'Frigate','HMS Bellerophon',False)
@@ -143,8 +143,8 @@ while running:
     if plotWind:
         wind.plotWind()
     
-    testShip.updateShip(dt,rCamera)
-    testShip2.updateShip(dt,rCamera)
+    testShip.updateShip(dt,rCamera,wind)
+    #testShip2.updateShip(dt,rCamera,wind)
                 
     pg.display.flip()
     

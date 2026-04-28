@@ -92,8 +92,10 @@ class ship():
             self.shipImage.set_colorkey((255,255,255))
             
             self.shipAccel = 1
-            self.shipSpeedLimit = 20
+            self.sailCoeff = 0.032
+            self.dragCoeff = 0.012
             self.shipAngularAccel = 15 #This can eventually be made dependent on angle.
+            self.shipDragCoeff = 0.0015 #Complete guess as to what this should be
                         
             #You can add ship class-specific 
             
@@ -105,7 +107,7 @@ class ship():
         self.screen = onScreen
         self.control = control
         
-    def updateShip(self,dt,camera:np.array):
+    def updateShip(self,dt,camera:np.array,wind):
         
         shipImage = pg.transform.rotate(self.shipImageRef,self.shipAngle)
         
@@ -115,10 +117,13 @@ class ship():
             relativeToShipX = self.rShip[0] - camera[0] - mx
             relativeToShipY = self.rShip[1] - camera[1] - my
             dShip = np.array([relativeToShipX,relativeToShipY])#Distance vector between mouse position and ship position
-            angleFromShip = np.degrees(np.acos(np.dot(self.vShip,dShip)/(np.linalg.norm(self.vShip)*np.linalg.norm(dShip))))
+            orientationVector = np.array([np.cos(np.radians(self.shipAngle)),np.radians(np.sin(self.shipAngle))])
+            angleFromShip = np.degrees(np.acos(-np.dot(orientationVector,dShip)/(np.linalg.norm(orientationVector)*np.linalg.norm(dShip))))
             
-            w = -1*dShip
+            w = -dShip
             cross = np.cross(self.vShip,w)
+
+            print(f'Vector:{orientationVector}, angleFromShip: {angleFromShip}')
             
             
             #########Determine angle right or left############
@@ -134,13 +139,33 @@ class ship():
                 
         else:
             rotationFactor=0
+
+        
         
         shipRect = shipImage.get_rect(center = (self.rShip[0]-camera[0],self.rShip[1]-camera[1]))    
         self.screen.blit(shipImage, (shipRect))
                     
-        shipAngularVelocity = rotationFactor*self.shipAngularAccel
+        shipAngularVelocity = rotationFactor*np.linalg.norm(self.vShip) #Problem is here
         self.shipAngle += shipAngularVelocity*dt
+        shipAngleClean = self.shipAngle%360
+
+
+        angleOfWind = np.degrees(np.acos(np.dot(wind.directionVector,np.array([1,0]))/np.linalg.norm(wind.directionVector))) #Computes wind angle wrt (1,0)
+        windToShipAngle = abs(shipAngleClean-angleOfWind)
+        windScore = abs(windToShipAngle-180)/180
+
+
+        self.vShip += self.sailCoeff*windScore*np.array([np.cos(np.radians(shipAngleClean)),np.sin(np.radians(shipAngleClean))])*dt - dt*self.shipDragCoeff*self.vShip**2
+
+        #self.vShip = self.shipSpeedLimit*windScore*np.array([np.cos(np.radians(self.shipAngle)),-np.sin(np.radians(self.shipAngle))])
+
+        '''
+        if np.linalg.norm(self.vShip) > 1:
+            
+            self.vShip = self.shipSpeedLimit*self.vShip/np.linalg.norm(self.vShip)'''
         
+        self.rShip += self.vShip*dt
+        '''
         self.vShip = self.shipSpeedLimit*np.array([np.cos(np.radians(self.shipAngle)),-np.sin(np.radians(self.shipAngle))])
         
         
@@ -150,6 +175,8 @@ class ship():
             self.vShip = self.shipSpeedLimit*self.vShip/np.linalg.norm(self.vShip)
         
         self.rShip += self.vShip*dt
+
+        '''
 
 class straightWind():
 
