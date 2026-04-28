@@ -92,8 +92,8 @@ class ship():
             self.shipImage.set_colorkey((255,255,255))
             
             self.shipAccel = 1
-            self.sailCoeff = 0.032
-            self.dragCoeff = 0.012
+            self.sailCoeff = 0.02
+            self.dragCoeff = 0.0075
             self.shipAngularAccel = 15 #This can eventually be made dependent on angle.
             self.shipDragCoeff = 0.0015 #Complete guess as to what this should be
             self.steerCoefficient = 0.05
@@ -122,6 +122,8 @@ class ship():
             dShip = np.array([relativeToShipX,relativeToShipY])#Distance vector between mouse position and ship position
             orientationVector = np.array([np.cos(np.radians(self.shipAngle)),np.sin(np.radians(self.shipAngle))])
             angleFromShip = 180 - np.degrees(np.acos(np.dot(orientationVector,dShip)/(np.linalg.norm(orientationVector)*np.linalg.norm(dShip))))
+            
+            "There needs to be some relation between vShip (velocity vector) that ties it to angle, or you get weird drifting motion."
             
             w = -dShip
             cross = np.cross(self.vShip,w)

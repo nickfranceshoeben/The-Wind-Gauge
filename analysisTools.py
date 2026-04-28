@@ -60,4 +60,6 @@ ax[1].legend()
 plt.show()
 
 #Something around sailCoeff = 0.007/8 and 0.003. This means top speed in about 220 seconds (3 minutes and 40 seconds).
-#In reality this would have been much slower (anywhere from 5 to 15 minutes) but that makes for a very boring simulation
+#In reality this would have been much slower (anywhere from 5 to 15 minutes) but that makes for a very boring simulation.
+
+#In fact, 3 minutes 40 seconds also makes for a dull simulation. Try 0.02 and 0.0075 (50 seconds to top)
