@@ -1,6 +1,7 @@
 import numpy as np
 import pygame as pg
 import pickle as pk
+from tools import R_w_s,R_s_w
 
 
 class background():
@@ -78,7 +79,7 @@ class background():
 
 class ship():
     
-    def __init__(self,rShipInitial:np.array, vShipInitial:np.array, shipAngleInitial:np.array,onScreen=pg.surface.Surface, shipClass='Frigate',name='HMS Surprise', control=False):
+    def __init__(self,rShipInitial:np.array, vShipInitial:np.array, thetaShipInitial:np.array,onScreen=pg.surface.Surface, shipClass='Frigate',name='HMS Surprise', control=False):
         
         print(f'The {shipClass} {name} has left drydock!')
         
@@ -90,101 +91,116 @@ class ship():
                                         self.shipImage.get_height()*3))
             self.shipImage = pg.transform.flip(self.shipImage,1,0)
             self.shipImage.set_colorkey((255,255,255))
+            self.shipImageRef = self.shipImage
+            self.screen = onScreen
+            self.control = control
             
-            self.shipAccel = 1
-            self.sailCoeff = 0.02
-            self.dragCoeff = 0.0075
-            self.shipAngularAccel = 15 #This can eventually be made dependent on angle.
-            self.shipDragCoeff = 0.0015 #Complete guess as to what this should be
-            self.steerCoefficient = 0.05
-            self.angularDragCoeff = 0.15
-                        
-            #You can add ship class-specific 
+            ################################### Coefficients ############################
+            self.sailCoeff = 0.065          # Regulates sail (think of it as surface area)
+            self.dragCoeff = 0.020          # How much drag is created by the sail
+
+            self.dampCoeff1 = 0.145         # forward water drag
+            self.hydroCoeff1 = 0.53         # lateral drag (translation)
+            self.hydroCoeff2 = 0.014        # Rotational drag (velocity)
             
+            self.rudderCoefficient = 0.028  # Rudder strength
+            self.angularDragCoeff = 0.48    # Rotational drag (angular rate)
+            
+            
+        ################### Ship state ###################
         
-        self.shipImageRef = self.shipImage
         self.rShip = rShipInitial
         self.vShip = vShipInitial
-        self.shipAngle = shipAngleInitial
-        self.shipAngularVelocity = 0
-        self.screen = onScreen
-        self.control = control
+        self.thetaShip = thetaShipInitial
+        self.thetaDotShip = 0
         
-    def updateShip(self,dt,camera:np.array,wind):
+        #################### Ship inputs #################
         
-        shipImage = pg.transform.rotate(self.shipImageRef,self.shipAngle)
+        self.sailAngle = 0  # These will be controllable soon
+        self.shipAngle = 0
         
+        
+    def updateShip(self, dt, camera: np.array, wind):
+        
+        #################### STEERING ####################
+        rotationFactor = 0.0
         if self.control:
-    
             mx, my = pg.mouse.get_pos()
-            relativeToShipX = self.rShip[0] - camera[0] - mx
-            relativeToShipY = self.rShip[1] - camera[1] - my
-            dShip = np.array([relativeToShipX,relativeToShipY])#Distance vector between mouse position and ship position
-            orientationVector = np.array([np.cos(np.radians(self.shipAngle)),np.sin(np.radians(self.shipAngle))])
-            angleFromShip = 180 - np.degrees(np.acos(np.dot(orientationVector,dShip)/(np.linalg.norm(orientationVector)*np.linalg.norm(dShip))))
+            mouse_vec = np.array([
+                mx + camera[0] - self.rShip[0],
+                my + camera[1] - self.rShip[1]
+            ])
             
-            "There needs to be some relation between vShip (velocity vector) that ties it to angle, or you get weird drifting motion."
+            fwd = np.array([np.cos(self.thetaShip), np.sin(self.thetaShip)])
             
-            w = -dShip
-            cross = np.cross(self.vShip,w)
+            angle_diff = np.degrees(np.arctan2(
+                fwd[0]*mouse_vec[1] - fwd[1]*mouse_vec[0],
+                fwd[0]*mouse_vec[0] + fwd[1]*mouse_vec[1]
+            ))
+            
+            rotationFactor = np.clip(angle_diff / 90.0, -1.0, 1.0)
 
-            
-            
-            
-            #########Determine angle right or left############
-            if cross>0:
-                
-                angleFromShip = min(90, angleFromShip)
-                rotationFactor = -angleFromShip/90
-                
-            if cross<0:
-                
-                angleFromShip = max(-90,-angleFromShip)
-                rotationFactor = -angleFromShip/90
-                
+
+        # ====================== SAIL FORCES ======================
+        Rws = R_w_s(self.thetaShip)
+        Rsw = R_s_w(self.thetaShip)
+        
+        vs = self.vShip
+        was = Rws @ (-wind.directionVector - vs)        # <--- Inverted wind here, forgot a sign somewhere
+        normWas = np.linalg.norm(was)
+        
+        if normWas < 1e-6:
+            sailForceShip = np.zeros(2)
         else:
-            rotationFactor=0
-
-        
-        
-        shipRect = shipImage.get_rect(center = (self.rShip[0]-camera[0],self.rShip[1]-camera[1]))    
-        self.screen.blit(shipImage, (shipRect))
-                    
-        self.shipAngularVelocity += self.steerCoefficient * rotationFactor*np.linalg.norm(self.vShip) - (self.angularDragCoeff * self.shipAngularVelocity)
-        self.shipAngle += self.shipAngularVelocity*dt
-        shipAngleClean = self.shipAngle%360
-        
-        print(f'Vector:{orientationVector}, angleFromShip: {angleFromShip}, angularVelocity:{self.shipAngularVelocity}')
-
-
-        angleOfWind = np.degrees(np.acos(np.dot(wind.directionVector,np.array([1,0]))/np.linalg.norm(wind.directionVector))) #Computes wind angle wrt (1,0)
-        windToShipAngle = abs(shipAngleClean-angleOfWind)
-        windScore = abs(windToShipAngle-180)/180
-
-
-        self.vShip += self.sailCoeff*windScore*np.array([np.cos(np.radians(shipAngleClean)),np.sin(np.radians(shipAngleClean))])*dt - dt*self.shipDragCoeff*self.vShip**2
-
-        #self.vShip = self.shipSpeedLimit*windScore*np.array([np.cos(np.radians(self.shipAngle)),-np.sin(np.radians(self.shipAngle))])
-
-        '''
-        if np.linalg.norm(self.vShip) > 1:
+            d = was / normWas
             
-            self.vShip = self.shipSpeedLimit*self.vShip/np.linalg.norm(self.vShip)'''
-        
-        self.rShip += self.vShip*dt
-        '''
-        self.vShip = self.shipSpeedLimit*np.array([np.cos(np.radians(self.shipAngle)),-np.sin(np.radians(self.shipAngle))])
-        
-        
-        
-        if np.linalg.norm(self.vShip) > 1:
+            # Square sail: stronger drive when wind is coming from behind/side
+            windFromBehind = max(0.0, -d[0])           # -d[0] > 0 when wind pushes ship forward
+            sailMagnitude = self.sailCoeff * (normWas ** 2) * windFromBehind
             
-            self.vShip = self.shipSpeedLimit*self.vShip/np.linalg.norm(self.vShip)
+            sailDrag = self.dragCoeff * (normWas ** 2) * d * 0.8
+            
+            sailForceShip = np.array([sailMagnitude, 0.0]) - sailDrag
+
+
+        # ====================== WATER FORCES ======================
+        vsShip = Rws @ self.vShip
         
-        self.rShip += self.vShip*dt
+        waterForceShip = np.array([
+            -self.dampCoeff1 * vsShip[0] * abs(vsShip[0]) - 0.05 * vsShip[0],   # forward + small linear
+            -self.hydroCoeff1 * vsShip[1] * abs(vsShip[1])                        # strong lateral
+        ])
 
-        '''
+        totalForceShip = sailForceShip + waterForceShip
+        totalForceWorld = Rsw @ totalForceShip
 
+
+        # ====================== ANGULAR DYNAMICS ======================
+        speed = np.linalg.norm(self.vShip)
+        
+        rudderTorque = self.rudderCoefficient * speed * rotationFactor
+        angularDamping = self.angularDragCoeff * self.thetaDotShip + self.hydroCoeff2 * (speed ** 2) * self.thetaDotShip
+        
+        thetaDotDot = rudderTorque - angularDamping
+
+
+        # ====================== INTEGRATION ======================
+        self.vShip += totalForceWorld * dt
+        self.rShip += self.vShip * dt
+        
+        self.thetaDotShip += thetaDotDot * dt
+        self.thetaShip = (self.thetaShip + self.thetaDotShip * dt) % (2 * np.pi)
+        
+        self.shipAngle = np.degrees(self.thetaShip)
+
+        # ====================== DRAWING ======================
+        rotated = pg.transform.rotate(self.shipImageRef, -self.shipAngle)
+        rect = rotated.get_rect(center=(self.rShip[0] - camera[0], self.rShip[1] - camera[1]))
+        self.screen.blit(rotated, rect)
+            
+        print(f'Angle:{self.shipAngle}, rudder: {rotationFactor},')
+        
+        
 class straightWind():
 
     def __init__(self,directionVector:np.array, screenResolution:np.array, onScreen:pg.surface.Surface):
