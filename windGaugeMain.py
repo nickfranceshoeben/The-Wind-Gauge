@@ -76,7 +76,7 @@ rCamera = np.array([5000.,5000.])
 cameraSpeedX = np.array([250.,0])
 cameraSpeedY = np.array([0,250.])
 
-sailSpeed = 2.5
+sailSpeed = 5.5
 sailAngle = 0
 
 rShip = np.array([5500.,5360.])

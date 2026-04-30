@@ -107,7 +107,7 @@ class ship():
             self.control = control
             
             ################################### Coefficients ############################
-            self.sailCoeff = 0.065          # Regulates sail (think of it as surface area)
+            self.sailCoeff = 0.12          # Regulates sail (think of it as surface area)
             self.dragCoeff = 0.020          # How much drag is created by the sail
 
             self.dampCoeff1 = 0.145         # forward water drag
@@ -160,7 +160,7 @@ class ship():
         Rsw = R_s_w(self.thetaShip)
         
         vs = self.vShip
-        was = Rws @ (-wind.directionVector - vs)        # <--- Inverted wind here, forgot a sign somewhere
+        was = Rws @ (-wind.directionVector - vs)        
         normWas = np.linalg.norm(was)
         
         if normWas < 1e-6:
@@ -168,21 +168,41 @@ class ship():
         else:
             d = was / normWas
             
-            # Square sail: stronger drive when wind is coming from behind/side
-            windFromBehind = max(0.0, -d[0])           # -d[0] > 0 when wind pushes ship forward
-            sailMagnitude = self.sailCoeff * (normWas ** 2) * windFromBehind
+            sailRad = np.radians(self.sailAngle)
             
-            sailDrag = self.dragCoeff * (normWas ** 2) * d * 0.8
+            n = np.array([np.cos(sailRad), np.sin(sailRad)])
             
-            sailForceShip = np.array([sailMagnitude, 0.0]) - sailDrag
+            cosGamma = np.dot(n, -d)
+            cosGamma = np.clip(cosGamma, -1.0, 1.0)
+            
+            sinGamma = np.sqrt(1.0 - cosGamma**2)
+            
+            W2 = normWas ** 2
+            
+            dragForce = self.dragCoeff * W2 * (-d)
+            
+            if np.abs(sinGamma) > 1e-8:
+                perp = np.array([-d[1], d[0]])
+                if np.dot(perp, np.array([1.0, 0.0])) < 0:
+                    perp = -perp
+                
+                lift_magnitude = self.sailCoeff * W2 * sinGamma
+                liftForce = lift_magnitude * perp
+            else:
+                liftForce = np.zeros(2)
+            
+            sailForceShip = liftForce + dragForce
+            
+            forwardBias = max(0.0, -d[0]) * 0.3 * self.sailCoeff * W2
+            sailForceShip[0] += forwardBias
 
 
         # ====================== WATER FORCES ======================
         vsShip = Rws @ self.vShip
         
         waterForceShip = np.array([
-            -self.dampCoeff1 * vsShip[0] * abs(vsShip[0]) - 0.05 * vsShip[0],   # forward + small linear
-            -self.hydroCoeff1 * vsShip[1] * abs(vsShip[1])                        # strong lateral
+            -self.dampCoeff1 * vsShip[0] * abs(vsShip[0]) - 0.05 * vsShip[0],   
+            -self.hydroCoeff1 * vsShip[1] * abs(vsShip[1])                        
         ])
 
         totalForceShip = sailForceShip + waterForceShip
@@ -222,6 +242,11 @@ class ship():
         self.screen.blit(rotatedSail, rectSailMain)
         self.screen.blit(rotatedSail, rectSailFore)
         self.screen.blit(rotatedSail, rectSailAft)
+        
+        ########DEBUG##################
+        sailForceWorld = Rsw@sailForceShip
+        rectVect = rotated.get_rect(center=(self.rShip[0] - camera[0]+sailForceWorld[0]*50, self.rShip[1] - camera[1]+sailForceWorld[1]*50))
+        pg.draw.line(self.screen, (255,0,0), rect.center, rectVect.center)
         
         print(f'Sail Angle: {self.sailAngle}')
         
