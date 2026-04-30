@@ -92,6 +92,17 @@ class ship():
             self.shipImage = pg.transform.flip(self.shipImage,1,0)
             self.shipImage.set_colorkey((255,255,255))
             self.shipImageRef = self.shipImage
+            
+            self.sailImage = pg.image.load('sailTemporary.png').convert()
+            self.sailImage = pg.transform.scale(self.sailImage,
+                                                (self.sailImage.get_width()*3,
+                                                self.sailImage.get_height()*3))
+            self.sailImage = pg.transform.flip(self.sailImage,1,0)
+            self.sailImage.set_colorkey((255,255,255))
+            self.sailImageRef = self.sailImage
+            
+            
+            
             self.screen = onScreen
             self.control = control
             
@@ -120,7 +131,7 @@ class ship():
         self.shipAngle = 0
         
         
-    def updateShip(self, dt, camera: np.array, wind):
+    def updateShip(self, dt, camera: np.array, wind, sailAngle):
         
         #################### STEERING ####################
         rotationFactor = 0.0
@@ -139,6 +150,9 @@ class ship():
             ))
             
             rotationFactor = np.clip(angle_diff / 90.0, -1.0, 1.0)
+            
+        #################### SAIL #########################
+        self.sailAngle = sailAngle
 
 
         # ====================== SAIL FORCES ======================
@@ -197,8 +211,19 @@ class ship():
         rotated = pg.transform.rotate(self.shipImageRef, -self.shipAngle)
         rect = rotated.get_rect(center=(self.rShip[0] - camera[0], self.rShip[1] - camera[1]))
         self.screen.blit(rotated, rect)
-            
-        print(f'Angle:{self.shipAngle}, rudder: {rotationFactor},')
+        
+        rotatedSail = pg.transform.rotate(self.sailImageRef, -self.shipAngle-self.sailAngle)
+        
+        foreDistance = 18*np.array([np.cos(self.thetaShip),np.sin(self.thetaShip)])
+        aftDistance = 18*np.array([np.cos(self.thetaShip),np.sin(self.thetaShip)])
+        rectSailMain = rotatedSail.get_rect(center=(self.rShip[0]-camera[0],self.rShip[1]-camera[1]))
+        rectSailFore = rotatedSail.get_rect(center=(self.rShip[0]-camera[0]+foreDistance[0],self.rShip[1]-camera[1]+foreDistance[1]))
+        rectSailAft = rotatedSail.get_rect(center=(self.rShip[0]-camera[0]-aftDistance[0],self.rShip[1]-camera[1]-aftDistance[1]))
+        self.screen.blit(rotatedSail, rectSailMain)
+        self.screen.blit(rotatedSail, rectSailFore)
+        self.screen.blit(rotatedSail, rectSailAft)
+        
+        print(f'Sail Angle: {self.sailAngle}')
         
         
 class straightWind():

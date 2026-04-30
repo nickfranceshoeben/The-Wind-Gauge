@@ -76,6 +76,9 @@ rCamera = np.array([5000.,5000.])
 cameraSpeedX = np.array([250.,0])
 cameraSpeedY = np.array([0,250.])
 
+sailSpeed = 2.5
+sailAngle = 0
+
 rShip = np.array([5500.,5360.])
 vShip = np.array([2,0.])*shipStartingSpeed
 
@@ -89,6 +92,9 @@ wPressed = False
 dPressed = False
 aPressed = False
 sPressed = False
+
+increase = False
+decrease = False
     
 while running:
     #screen.blit(background, (5000-rCamera[0],5000-rCamera[1]))
@@ -119,9 +125,16 @@ while running:
             if event.key == pg.K_a:
                 aPressed = True
             ################################
+            
+            #Sails##########################
+            if event.key == pg.K_KP_PLUS:
+                increase = True
+            if event.key == pg.K_KP_MINUS:
+                decrease = True
         
         elif event.type == pg.KEYUP:
 
+            #Camera motion##################
             if event.key == pg.K_w:
                 wPressed = False
             if event.key == pg.K_s:
@@ -130,7 +143,14 @@ while running:
                 dPressed = False
             if event.key == pg.K_a:
                 aPressed = False
+                
+            #Sails##########################
+            if event.key == pg.K_KP_PLUS:
+                increase = False
+            if event.key == pg.K_KP_MINUS:
+                decrease = False
 
+    #Camera motion##########################
     if wPressed:
         rCamera += -cameraSpeedY*dt
     if sPressed:
@@ -139,11 +159,23 @@ while running:
         rCamera += cameraSpeedX*dt
     if aPressed:
         rCamera += -cameraSpeedX*dt
+        
+    #Sails###################################
+    if increase:
+        if sailAngle <90:
+            sailAngle += sailSpeed*dt
+        elif sailAngle >90:
+            sailAngle = 90
+    if decrease:
+        if sailAngle >-90:
+            sailAngle += -sailSpeed*dt
+        elif sailAngle <-90:
+            sailAngle = -90
 
     if plotWind:
         wind.plotWind()
     
-    testShip.updateShip(dt,rCamera,wind)
+    testShip.updateShip(dt,rCamera,wind,sailAngle)
     #testShip2.updateShip(dt,rCamera,wind)
                 
     pg.display.flip()
